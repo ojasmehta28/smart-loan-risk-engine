@@ -19,6 +19,19 @@ public class LoanApplication {
 
     private String status;
 
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
+    }
+    public String getApplicantName() {
+        return applicantName;
+    }
+    public void setApplicantName(String applicantName) {
+        this.applicantName = applicantName;
+    }
+
     public double getIncome() {
         return income;
     }
@@ -31,7 +44,7 @@ public class LoanApplication {
     public void setCreditScore(int creditScore){
         this.creditScore = creditScore;
     }
-    public double getLoadAmount(){
+    public double getLoanAmount(){
         return loanAmount;
     }
     public void setLoanAmount(double loanAmount){
@@ -43,5 +56,5 @@ public class LoanApplication {
     public void setStatus(String status) {
         this.status = status;
     }
-    
+
 }
