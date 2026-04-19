@@ -11,7 +11,7 @@ public class LoanService {
     @Autowired //dependency injection for the repository
     private LoanRepository loanRepository;
 
-    public LoanApplication applyLoan(LoanApplication loan) {
+    public LoanApplication applyLoan(LoanApplication loan) { //method to process loan application
 
         if (loan.getIncome() > 50000 && loan.getCreditScore() > 700) {
             loan.setStatus("APPROVED");
@@ -21,6 +21,6 @@ public class LoanService {
             loan.setStatus("REVIEW");
         }
 
-        return loanRepository.save(loan);
+        return loanRepository.save(loan); //save the loan application to the database
     }
 }
