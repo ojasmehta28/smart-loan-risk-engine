@@ -11,7 +11,7 @@ public class LoanRequestDTO {
     private String applicantName;
 
     @Min(value=1, message = "Income must be greater than 0") // Validation annotation to ensure the value is at least 1
-    private double applicantIncome;
+    private double Income;
 
     @Min(value=300, message="Credit Score must be at least 300") // Validation annotation to ensure the value is at least 300
     @Max(value=900, message="Credit Score must be at most 850") // Validation annotation to ensure the value is at most 850
@@ -19,4 +19,6 @@ public class LoanRequestDTO {
 
     @Min(value=1, message = "Loan amount must be greater than 0") // Validation annotation to ensure the value is at least 1
     private double loanAmount;
+
+    
 }
