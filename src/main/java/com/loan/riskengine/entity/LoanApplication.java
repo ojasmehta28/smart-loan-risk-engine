@@ -3,7 +3,7 @@ package com.loan.riskengine.entity;
 import jakarta.persistence.*; // Import JPA annotations
 import jakarta.validation.constraints.*; // Import validation annotations
 
-@Entity
+@Entity // JPA annotation to mark this class as a database entity
 public class LoanApplication {
 
     @Id

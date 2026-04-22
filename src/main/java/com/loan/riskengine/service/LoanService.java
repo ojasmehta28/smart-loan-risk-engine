@@ -1,14 +1,15 @@
 package com.loan.riskengine.service;
 
+import com.loan.riskengine.ruleengine.LoanRuleEngine; 
 import com.loan.riskengine.dto.LoanRequestDTO;
 import com.loan.riskengine.dto.LoanResponseDTO;
 import com.loan.riskengine.entity.LoanApplication;
 import com.loan.riskengine.repository.LoanRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service; // Service annotation to mark this class as a service component in the Spring context
 
-@Service
-public class LoanService {
+@Service 
+public class LoanService { // Service class to handle business logic for loan applications
 
     @Autowired
     private LoanRepository loanRepository;
@@ -19,18 +20,13 @@ public class LoanService {
         LoanApplication loan = new LoanApplication();
 
         loan.setApplicantName(request.getApplicantName());
-        loan.setIncome(request.getIncome()); // FIXED
+        loan.setIncome(request.getIncome()); 
         loan.setCreditScore(request.getCreditScore());
         loan.setLoanAmount(request.getLoanAmount());
 
         // STEP 2: Business Logic
-        if (loan.getIncome() > 50000 && loan.getCreditScore() > 700) {
-            loan.setStatus("APPROVED");
-        } else if (loan.getCreditScore() < 500) {
-            loan.setStatus("REJECTED");
-        } else {
-            loan.setStatus("REVIEW");
-        }
+        LoanRuleEngine engine = new LoanRuleEngine();
+        loan.setStatus(engine.evaluate(loan));
 
         // STEP 3: Save
         LoanApplication saved = loanRepository.save(loan);
