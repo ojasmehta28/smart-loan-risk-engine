@@ -19,5 +19,6 @@ public class LoanController {
     public LoanResponseDTO applyLoan(@Valid @RequestBody LoanRequestDTO request) { // method to handle loan application, validates the request body 
                                                                                    // and maps it to LoanRequestDTO
         return loanService.applyLoan(request);
+        
     }
 }

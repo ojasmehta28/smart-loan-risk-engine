@@ -15,7 +15,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class) // Method to handle validation exceptions that occur when @Valid fails in controller methods, 
                                          // allowing us to return a structured error response with details about the validation errors
-    public ResponseEntity<Map<String, Object>> handleValidationException(MethodArgumentNotValidException ex) { 
+    public ResponseEntity<Map<String, Object>> handleValidationException(MethodArgumentNotValidException ex) {  
 
         Map<String, String> errors = new HashMap<>(); // Create a map to hold field-specific error messages, 
                                                       // where the key is the field name and the value is the error message

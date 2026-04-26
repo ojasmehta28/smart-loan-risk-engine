@@ -6,7 +6,7 @@ import jakarta.validation.constraints.*; // Import validation annotations
 @Entity // JPA annotation to mark this class as a database entity
 public class LoanApplication {
 
-    @Id
+    @Id // Primary key for the entity
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto-generate ID values 
      private Long id;
 
