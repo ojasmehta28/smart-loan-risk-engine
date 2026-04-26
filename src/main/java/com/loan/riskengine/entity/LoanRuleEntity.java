@@ -16,6 +16,7 @@ public class LoanRuleEntity {
     private double minIncome; // Minimum income required for the loan;
     private int minCreditScore; // Minimum credit score required for the loan;
     private String decision; // Decision based on the rule, e.g., "APPROVE", "REJECT"
+    private int priority; // Priority of the rule (lower number = higher priority)
 
 
 
