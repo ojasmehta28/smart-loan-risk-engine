@@ -12,35 +12,70 @@ import java.util.List;
 @Component
 public class LoanRuleEngine {
 
-    // Inject repository to fetch rules from DB
     @Autowired
     private LoanRuleRepository ruleRepository;
 
     public String evaluate(LoanApplication loan) {
 
-        // STEP 1: Fetch rules from DB in priority order
-        // Rules are sorted: priority 1 → 2 → 3...
+        // STEP 1: Get rules sorted by priority
         List<LoanRuleEntity> rules = ruleRepository.findAllByOrderByPriorityAsc();
 
-        // STEP 2: Evaluate rules one by one
-
+        // STEP 2: Evaluate each rule
         for (LoanRuleEntity rule : rules) {
 
-            // Check if loan satisfies current rule condition
-            if (loan.getIncome() >= rule.getMinIncome() &&
-                loan.getCreditScore() >= rule.getMinCreditScore()) {
+            // Get value dynamically (income / creditScore)
+            double loanValue = getFieldValue(loan, rule.getField());
 
-                // STEP 3: Return decision immediately
-
+            // Apply operator logic
+            if (evaluateCondition(loanValue, rule.getOperator(), rule.getValue())) {
                 return rule.getDecision();
             }
         }
 
-        
-        // STEP 4: Default fallback
-        
-
-        // If no rule matched → send to manual review
+        // STEP 3: Default case
         return "REVIEW";
+    }
+
+    
+    // Get field value dynamically
+    
+    private double getFieldValue(LoanApplication loan, String field) { // This method retrieves the value of the specified field from the loan application. It uses a switch statement to determine which field to access based on the provided field name.
+
+        switch (field) {
+
+            case "income":
+                return loan.getIncome();
+
+            case "creditScore":
+                return loan.getCreditScore();
+
+            default:
+                return 0;
+        }
+    }
+
+    // Evaluate operator dynamically
+    private boolean evaluateCondition(double loanValue, String operator, double ruleValue) { // This method evaluates the condition specified by the operator between the loan value and the rule value. It uses a switch statement to determine which comparison to perform based on the provided operator.
+
+        switch (operator) {
+
+            case ">":
+                return loanValue > ruleValue;
+
+            case "<":
+                return loanValue < ruleValue;
+
+            case ">=":
+                return loanValue >= ruleValue;
+
+            case "<=":
+                return loanValue <= ruleValue;
+
+            case "==":
+                return loanValue == ruleValue;
+
+            default:
+                return false;
+        }
     }
 }

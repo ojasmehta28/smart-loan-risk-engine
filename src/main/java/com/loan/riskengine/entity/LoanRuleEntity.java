@@ -1,23 +1,30 @@
 package com.loan.riskengine.entity;
 
-import jakarta.persistence.*; // Import JPA annotations
-import lombok.*; // Import Lombok annotations
+import jakarta.persistence.*;
+import lombok.*;
 
-@Data // Lombok annotation to generate getters & setters
-@NoArgsConstructor // Lombok annotation to generate a no-args constructor
-@AllArgsConstructor // Lombok annotation to generate an all-args constructor
-@Entity // JPA annotation to mark this class as a database entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
 public class LoanRuleEntity {
 
-    @Id // Primary key for the entity
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto-generate ID values
-    private long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    private double minIncome; // Minimum income required for the loan;
-    private int minCreditScore; // Minimum credit score required for the loan;
-    private String decision; // Decision based on the rule, e.g., "APPROVE", "REJECT"
-    private int priority; // Priority of the rule (lower number = higher priority)
+    // Field name (income / creditScore)
+    private String field;
 
+    // Operator (>, <, >=, <=, ==)
+    private String operator;
 
+    // Value to compare against
+    private double value;
 
+    // Decision result
+    private String decision;
+
+    // Execution priority (lower = higher priority)
+    private int priority;
 }
