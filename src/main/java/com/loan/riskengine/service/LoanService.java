@@ -9,46 +9,41 @@ import com.loan.riskengine.ruleengine.LoanRuleEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 public class LoanService {
 
-    // Repository to interact with database (LoanApplication table)
     @Autowired
     private LoanRepository loanRepository;
 
-    // Inject Rule Engine (managed by Spring)
     @Autowired
     private LoanRuleEngine ruleEngine;
 
+    // Logger
+    private static final Logger logger = LoggerFactory.getLogger(LoanService.class);
+
     public LoanResponseDTO applyLoan(LoanRequestDTO request) {
 
-        // STEP 1: Convert DTO → Entity
+        logger.info("Received loan request for applicant: {}", request.getApplicantName());
 
-        // Create entity object (this will be saved in DB)
         LoanApplication loan = new LoanApplication();
 
-        // Map incoming request data to entity
         loan.setApplicantName(request.getApplicantName());
         loan.setIncome(request.getIncome());
         loan.setCreditScore(request.getCreditScore());
         loan.setLoanAmount(request.getLoanAmount());
 
-        // STEP 2: Apply Dynamic Rule Engine
-
-        // Instead of hardcoded if-else, delegate decision to rule engine
-        // RuleEngine will fetch rules from DB and evaluate
+        // Evaluate rules
         loan.setStatus(ruleEngine.evaluate(loan));
 
-        // STEP 3: Save to Database
+        logger.info("Loan decision for {} is {}", request.getApplicantName(), loan.getStatus());
 
-        // Save loan into DB and get saved object (with generated ID)
         LoanApplication saved = loanRepository.save(loan);
-
-        // STEP 4: Convert Entity → Response DTO
 
         LoanResponseDTO response = new LoanResponseDTO();
 
-        // Map saved entity data to response
         response.setId(saved.getId());
         response.setApplicantName(saved.getApplicantName());
         response.setIncome(saved.getIncome());
