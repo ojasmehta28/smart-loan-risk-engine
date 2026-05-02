@@ -44,9 +44,9 @@ public class LoanRuleService {
         LoanRuleEntity existing = ruleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Rule not found"));
 
-        existing.setField(updatedRule.getField());
-        existing.setOperator(updatedRule.getOperator());
-        existing.setValue(updatedRule.getValue());
+        //existing.setField(updatedRule.getField());
+        //existing.setOperator(updatedRule.getOperator());
+        //existing.setValue(updatedRule.getValue());
         existing.setDecision(updatedRule.getDecision());
         existing.setPriority(updatedRule.getPriority());
 

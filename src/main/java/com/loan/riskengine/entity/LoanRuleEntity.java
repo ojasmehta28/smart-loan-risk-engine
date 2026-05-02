@@ -14,24 +14,16 @@ public class LoanRuleEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Field name (income / creditScore)
-    private String field;
-
-    // Operator (>, <, >=, <=, ==)
-    private String operator;
-
-    // Value to compare against
-    private double value;
-
-    // Decision result
+    // Decision result (APPROVED / REJECTED)
     private String decision;
 
-    // Execution priority (lower = higher priority)
+    // Priority (lower number = higher priority)
     private int priority;
 
-    // One rule can have multiple conditions (for complex rules)
+    // AND / OR logic
+    private String logicalOperator;
+
+    // One rule can have multiple conditions
     @OneToMany(mappedBy = "rule", cascade = CascadeType.ALL)
     private List<RuleCondition> conditions;
-
-    private String logicalOperator; // AND / OR
 }
