@@ -7,8 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service; // mark the class as a service layer, which typically contains business logic and interacts with repositories to perform operations on data.
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.Logger; //used for logging information, warnings, and errors in the application. It helps in tracking the flow of the application and debugging issues.
+import org.slf4j.LoggerFactory; //used for creating Logger instances. It provides a way to obtain a logger for a specific class, which can then be used to log messages with various levels of severity (e.g., info, debug, error).
 
 @Service 
 public class LoanRuleService {

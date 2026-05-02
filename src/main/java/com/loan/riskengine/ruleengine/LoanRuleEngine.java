@@ -1,6 +1,7 @@
 package com.loan.riskengine.ruleengine;
 
 import com.loan.riskengine.entity.LoanRuleEntity;
+import com.loan.riskengine.entity.RuleCondition;
 import com.loan.riskengine.repository.LoanRuleRepository;
 import com.loan.riskengine.entity.LoanApplication;
 
@@ -33,17 +34,17 @@ public class LoanRuleEngine {
         // STEP 2: Evaluate each rule
         for (LoanRuleEntity rule : rules) {
 
-            double loanValue = getFieldValue(loan, rule.getField());
+            boolean result;
 
-            // Log which rule is being checked
-            logger.info("Checking Rule → field={}, operator={}, value={}",
-                    rule.getField(), rule.getOperator(), rule.getValue());
-
-            if (evaluateCondition(loanValue, rule.getOperator(), rule.getValue())) {
-
-                // Log matched rule
-                logger.info("Rule matched → Decision={}", rule.getDecision());
-
+            if ("AND".equalsIgnoreCase(rule.getLogicalOperator())) {
+            result = rule.getConditions().stream()
+                .allMatch(cond -> evaluateSingleCondition(loan, cond));
+            } else {
+                result = rule.getConditions().stream()
+                        .anyMatch(cond -> evaluateSingleCondition(loan, cond));
+            }
+        
+            if (result) {
                 return rule.getDecision();
             }
         }
@@ -91,5 +92,11 @@ public class LoanRuleEngine {
             default:
                 return false;
         }
+    }
+    private boolean evaluateSingleCondition(LoanApplication loan, RuleCondition cond) {
+
+    double loanValue = getFieldValue(loan, cond.getField());
+
+    return evaluateCondition(loanValue, cond.getOperator(), cond.getValue());
     }
 }
