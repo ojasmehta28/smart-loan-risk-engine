@@ -2,7 +2,7 @@ package com.loan.riskengine.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.util.List;
+// import java.util.List; // used for condition-based rules
 
 @Data
 @NoArgsConstructor
@@ -20,10 +20,13 @@ public class LoanRuleEntity {
     // Priority (lower number = higher priority)
     private int priority;
 
-    // AND / OR logic
-    private String logicalOperator;
+    
+    // private String logicalOperator; // "AND" or "OR" (used for condition-based rules)
 
-    // One rule can have multiple conditions
-    @OneToMany(mappedBy = "rule", cascade = CascadeType.ALL)
-    private List<RuleCondition> conditions;
+    
+    // @OneToMany(mappedBy = "rule", cascade = CascadeType.ALL) 
+    // private List<RuleCondition> conditions; // List of conditions (used for condition-based rules)
+
+    
+    private String expression; // e.g., "income > 50000 AND creditScore > 700" (used for expression-based rules)
 }
