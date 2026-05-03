@@ -110,13 +110,48 @@ public class LoanRuleEngine {
     //     // Single condition
     //     return evaluateCondition(expr);
     // }
-    private boolean evaluateSimpleExpression(String expr) {
+//     private boolean evaluateSimpleExpression(String expr) {
+
+//     try {
+
+//         if (expr.contains("AND")) {
+//             String[] parts = expr.split("AND");
+
+//             for (String part : parts) {
+//                 if (!evaluateCondition(part.trim())) {
+//                     return false;
+//                 }
+//             }
+//             return true;
+//         }
+
+//         if (expr.contains("OR")) {
+//             String[] parts = expr.split("OR");
+
+//             for (String part : parts) {
+//                 if (evaluateCondition(part.trim())) {
+//                     return true;
+//                 }
+//             }
+//             return false;
+//         }
+
+//         return evaluateCondition(expr);
+
+//     } catch (Exception e) {
+//         logger.error("Error evaluating expression: {}", expr, e);
+//         return false; // 🔥 NO CRASH
+//     }
+// }
+   private boolean evaluateSimpleExpression(String expr) {
 
     try {
 
+        // =====================================================
+        // (incorrect for mixed AND/OR)
+        /*
         if (expr.contains("AND")) {
             String[] parts = expr.split("AND");
-
             for (String part : parts) {
                 if (!evaluateCondition(part.trim())) {
                     return false;
@@ -127,7 +162,6 @@ public class LoanRuleEngine {
 
         if (expr.contains("OR")) {
             String[] parts = expr.split("OR");
-
             for (String part : parts) {
                 if (evaluateCondition(part.trim())) {
                     return true;
@@ -135,12 +169,41 @@ public class LoanRuleEngine {
             }
             return false;
         }
+        */
+        // =====================================================
 
-        return evaluateCondition(expr);
+        // =====================================================
+        // (CORRECT PRECEDENCE HANDLING)
+        // =====================================================
+
+        // Step 1: Split by OR first (lowest priority)
+        String[] orParts = expr.split("OR");
+
+        for (String orPart : orParts) {
+
+            // Step 2: Inside each OR → evaluate AND
+            String[] andParts = orPart.split("AND");
+
+            boolean andResult = true;
+
+            for (String andPart : andParts) {
+                if (!evaluateCondition(andPart.trim())) {
+                    andResult = false;
+                    break;
+                }
+            }
+
+            // Step 3: If ANY OR block is true → return true
+            if (andResult) {
+                return true;
+            }
+        }
+
+        return false;
 
     } catch (Exception e) {
         logger.error("Error evaluating expression: {}", expr, e);
-        return false; // 🔥 NO CRASH
+        return false;
     }
 }
 
