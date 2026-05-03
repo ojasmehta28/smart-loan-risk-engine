@@ -1,7 +1,7 @@
 package com.loan.riskengine.ruleengine;
 
 import com.loan.riskengine.entity.LoanRuleEntity;
-import com.loan.riskengine.entity.RuleCondition;
+// import com.loan.riskengine.entity.RuleCondition; // ❌ OLD
 import com.loan.riskengine.repository.LoanRuleRepository;
 import com.loan.riskengine.entity.LoanApplication;
 
@@ -19,12 +19,10 @@ public class LoanRuleEngine {
     @Autowired
     private LoanRuleRepository ruleRepository;
 
-    // Logger object (used to print logs)
     private static final Logger logger = LoggerFactory.getLogger(LoanRuleEngine.class);
 
     public String evaluate(LoanApplication loan) {
 
-        // Log start of evaluation
         logger.info("Starting rule evaluation for Loan: income={}, creditScore={}",
                 loan.getIncome(), loan.getCreditScore());
 
@@ -34,69 +32,119 @@ public class LoanRuleEngine {
         // STEP 2: Evaluate each rule
         for (LoanRuleEntity rule : rules) {
 
+            
+            /*
             boolean result;
 
             if ("AND".equalsIgnoreCase(rule.getLogicalOperator())) {
-            result = rule.getConditions().stream()
-                .allMatch(cond -> evaluateSingleCondition(loan, cond));
+                result = rule.getConditions().stream()
+                        .allMatch(cond -> evaluateSingleCondition(loan, cond));
             } else {
                 result = rule.getConditions().stream()
                         .anyMatch(cond -> evaluateSingleCondition(loan, cond));
             }
-        
+
             if (result) {
+                return rule.getDecision();
+            }
+            */
+
+            
+            if (evaluateExpression(rule.getExpression(), loan)) { // used to be evaluateConditions 
+
+                logger.info("Rule matched → Decision={}", rule.getDecision());
+
                 return rule.getDecision();
             }
         }
 
-        // Log fallback
         logger.info("No rule matched → Default decision=REVIEW");
 
         return "REVIEW";
     }
 
-    private double getFieldValue(LoanApplication loan, String field) {
+    
+    // Evaluate full expressio
+    private boolean evaluateExpression(String expression, LoanApplication loan) {
 
-        switch (field) {
+        // Replace variables with actual values
+        expression = expression.replace("income", String.valueOf(loan.getIncome()));
+        expression = expression.replace("creditScore", String.valueOf(loan.getCreditScore()));
 
-            case "income":
-                return loan.getIncome();
+        // Example:
+        // "income >= 50000" → "60000 >= 50000"
 
-            case "creditScore":
-                return loan.getCreditScore();
-
-            default:
-                return 0;
-        }
+        return evaluateSimpleExpression(expression);
     }
 
-    private boolean evaluateCondition(double loanValue, String operator, double ruleValue) {
+    
+    // Handle AND / OR
+    private boolean evaluateSimpleExpression(String expr) {
+
+        // AND logic
+        if (expr.contains("AND")) {
+
+            String[] parts = expr.split("AND");
+
+            for (String part : parts) {
+                if (!evaluateCondition(part.trim())) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // OR logic
+        if (expr.contains("OR")) {
+
+            String[] parts = expr.split("OR");
+
+            for (String part : parts) {
+                if (evaluateCondition(part.trim())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Single condition
+        return evaluateCondition(expr);
+    }
+
+    
+    // Evaluate single condition
+    private boolean evaluateCondition(String condition) {
+
+        // Example: "60000 >= 50000"
+
+        String[] tokens = condition.split(" ");
+
+        double left = Double.parseDouble(tokens[0]);
+        String operator = tokens[1];
+        double right = Double.parseDouble(tokens[2]);
 
         switch (operator) {
 
             case ">":
-                return loanValue > ruleValue;
+                return left > right;
 
             case "<":
-                return loanValue < ruleValue;
+                return left < right;
 
             case ">=":
-                return loanValue >= ruleValue;
+                return left >= right;
 
             case "<=":
-                return loanValue <= ruleValue;
+                return left <= right;
 
             case "==":
-                return loanValue == ruleValue;
+                return left == right;
 
             default:
                 return false;
         }
     }
-    private boolean evaluateSingleCondition(LoanApplication loan, RuleCondition cond) {
 
-    double loanValue = getFieldValue(loan, cond.getField());
-
-    return evaluateCondition(loanValue, cond.getOperator(), cond.getValue());
-    }
+    
+    
 }
