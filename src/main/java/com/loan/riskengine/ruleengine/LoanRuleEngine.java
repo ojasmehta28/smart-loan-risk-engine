@@ -64,7 +64,7 @@ public class LoanRuleEngine {
     }
 
     
-    // Evaluate full expressio
+    // Evaluate full expression
     private boolean evaluateExpression(String expression, LoanApplication loan) {
 
         // Replace variables with actual values
@@ -79,11 +79,42 @@ public class LoanRuleEngine {
 
     
     // Handle AND / OR
+    // private boolean evaluateSimpleExpression(String expr) {
+
+    //     // AND logic
+    //     if (expr.contains("AND")) {
+
+    //         String[] parts = expr.split("AND");
+
+    //         for (String part : parts) {
+    //             if (!evaluateCondition(part.trim())) {
+    //                 return false;
+    //             }
+    //         }
+    //         return true;
+    //     }
+
+    //     // OR logic
+    //     if (expr.contains("OR")) {
+
+    //         String[] parts = expr.split("OR");
+
+    //         for (String part : parts) {
+    //             if (evaluateCondition(part.trim())) {
+    //                 return true;
+    //             }
+    //         }
+    //         return false;
+    //     }
+
+    //     // Single condition
+    //     return evaluateCondition(expr);
+    // }
     private boolean evaluateSimpleExpression(String expr) {
 
-        // AND logic
-        if (expr.contains("AND")) {
+    try {
 
+        if (expr.contains("AND")) {
             String[] parts = expr.split("AND");
 
             for (String part : parts) {
@@ -94,9 +125,7 @@ public class LoanRuleEngine {
             return true;
         }
 
-        // OR logic
         if (expr.contains("OR")) {
-
             String[] parts = expr.split("OR");
 
             for (String part : parts) {
@@ -107,41 +136,86 @@ public class LoanRuleEngine {
             return false;
         }
 
-        // Single condition
         return evaluateCondition(expr);
+
+    } catch (Exception e) {
+        logger.error("Error evaluating expression: {}", expr, e);
+        return false; // 🔥 NO CRASH
     }
+}
 
     
     // Evaluate single condition
+    // private boolean evaluateCondition(String condition) {
+
+    //     // Example: "60000 >= 50000"
+
+    //     String[] tokens = condition.split(" ");
+
+    //     double left = Double.parseDouble(tokens[0]);
+    //     String operator = tokens[1];
+    //     double right = Double.parseDouble(tokens[2]);
+
+    //     switch (operator) {
+
+    //         case ">":
+    //             return left > right;
+
+    //         case "<":
+    //             return left < right;
+
+    //         case ">=":
+    //             return left >= right;
+
+    //         case "<=":
+    //             return left <= right;
+
+    //         case "==":
+    //             return left == right;
+
+    //         default:
+    //             return false;
+    //     }
+    // }
+
     private boolean evaluateCondition(String condition) {
 
-        // Example: "60000 >= 50000"
+        try {
+        // Normalize spacing (VERY IMPORTANT FIX)
+        condition = condition.replaceAll(">=", " >= ")
+                             .replaceAll("<=", " <= ")
+                             .replaceAll(">", " > ")
+                             .replaceAll("<", " < ")
+                             .replaceAll("==", " == ")
+                             .replaceAll("\\s+", " ")
+                             .trim();
 
         String[] tokens = condition.split(" ");
+
+        // SAFETY CHECK
+        if (tokens.length != 3) {
+            logger.error("Invalid condition format: {}", condition);
+            return false;
+        }
 
         double left = Double.parseDouble(tokens[0]);
         String operator = tokens[1];
         double right = Double.parseDouble(tokens[2]);
 
         switch (operator) {
-
-            case ">":
-                return left > right;
-
-            case "<":
-                return left < right;
-
-            case ">=":
-                return left >= right;
-
-            case "<=":
-                return left <= right;
-
-            case "==":
-                return left == right;
-
+            case ">": return left > right;
+            case "<": return left < right;
+            case ">=": return left >= right;
+            case "<=": return left <= right;
+            case "==": return left == right;
             default:
+                logger.error("Invalid operator: {}", operator);
                 return false;
+        }
+
+        } catch (Exception e) {
+        logger.error("Error evaluating condition: {}", condition, e);
+        return false; 
         }
     }
 
