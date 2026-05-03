@@ -1,7 +1,7 @@
 package com.loan.riskengine.ruleengine;
 
 import com.loan.riskengine.entity.LoanRuleEntity;
-// import com.loan.riskengine.entity.RuleCondition; // ❌ OLD
+// import com.loan.riskengine.entity.RuleCondition; // ❌ OLD (not used now)
 import com.loan.riskengine.repository.LoanRuleRepository;
 import com.loan.riskengine.entity.LoanApplication;
 
@@ -19,21 +19,26 @@ public class LoanRuleEngine {
     @Autowired
     private LoanRuleRepository ruleRepository;
 
+    // Logger → used for debugging and tracing flow
     private static final Logger logger = LoggerFactory.getLogger(LoanRuleEngine.class);
 
+    // =========================================================
+    // MAIN METHOD → evaluates loan against rules
+    // =========================================================
     public String evaluate(LoanApplication loan) {
 
         logger.info("Starting rule evaluation for Loan: income={}, creditScore={}",
                 loan.getIncome(), loan.getCreditScore());
 
-        // STEP 1: Get rules sorted by priority
+        // STEP 1: Fetch rules sorted by priority
         List<LoanRuleEntity> rules = ruleRepository.findAllByOrderByPriorityAsc();
 
-        // STEP 2: Evaluate each rule
+        // STEP 2: Evaluate rules one by one
         for (LoanRuleEntity rule : rules) {
 
-            
             /*
+            ❌ OLD CONDITION-BASED ENGINE (kept for understanding)
+
             boolean result;
 
             if ("AND".equalsIgnoreCase(rule.getLogicalOperator())) {
@@ -49,8 +54,8 @@ public class LoanRuleEngine {
             }
             */
 
-            
-            if (evaluateExpression(rule.getExpression(), loan)) { // used to be evaluateConditions 
+            // ✅ NEW: Expression-based evaluation
+            if (evaluateExpression(rule.getExpression(), loan)) {
 
                 logger.info("Rule matched → Decision={}", rule.getDecision());
 
@@ -58,16 +63,18 @@ public class LoanRuleEngine {
             }
         }
 
+        // Default fallback
         logger.info("No rule matched → Default decision=REVIEW");
 
         return "REVIEW";
     }
 
-    
-    // Evaluate full expression
+    // =========================================================
+    // Replace variables with actual values
+    // =========================================================
     private boolean evaluateExpression(String expression, LoanApplication loan) {
 
-        // Replace variables with actual values
+        // Replace variables dynamically
         expression = expression.replace("income", String.valueOf(loan.getIncome()));
         expression = expression.replace("creditScore", String.valueOf(loan.getCreditScore()));
 
@@ -77,211 +84,129 @@ public class LoanRuleEngine {
         return evaluateSimpleExpression(expression);
     }
 
-    
-    // Handle AND / OR
-    // private boolean evaluateSimpleExpression(String expr) {
+    // =========================================================
+    // CORE ENGINE → handles brackets + AND/OR
+    // =========================================================
+    private boolean evaluateSimpleExpression(String expr) {
 
-    //     // AND logic
-    //     if (expr.contains("AND")) {
+        try {
 
-    //         String[] parts = expr.split("AND");
+            /*
+            ❌ OLD LOGIC (NO precedence + NO bracket support)
 
-    //         for (String part : parts) {
-    //             if (!evaluateCondition(part.trim())) {
-    //                 return false;
-    //             }
-    //         }
-    //         return true;
-    //     }
+            if (expr.contains("AND")) { ... }
+            if (expr.contains("OR")) { ... }
+            */
 
-    //     // OR logic
-    //     if (expr.contains("OR")) {
+            // =====================================================
+            // ✅ STEP 1: HANDLE BRACKETS FIRST (RECURSIVE)
+            // =====================================================
+            while (expr.contains("(")) {
 
-    //         String[] parts = expr.split("OR");
+                int closeIndex = expr.indexOf(")");
+                int openIndex = expr.lastIndexOf("(", closeIndex);
 
-    //         for (String part : parts) {
-    //             if (evaluateCondition(part.trim())) {
-    //                 return true;
-    //             }
-    //         }
-    //         return false;
-    //     }
+                // Extract inner expression
+                String innerExpression = expr.substring(openIndex + 1, closeIndex);
 
-    //     // Single condition
-    //     return evaluateCondition(expr);
-    // }
-//     private boolean evaluateSimpleExpression(String expr) {
+                // Recursively evaluate inner part
+                boolean innerResult = evaluateSimpleExpression(innerExpression);
 
-//     try {
+                // Replace "(...)" with true/false
+                expr = expr.substring(0, openIndex)
+                     + innerResult
+                     + expr.substring(closeIndex + 1);
 
-//         if (expr.contains("AND")) {
-//             String[] parts = expr.split("AND");
-
-//             for (String part : parts) {
-//                 if (!evaluateCondition(part.trim())) {
-//                     return false;
-//                 }
-//             }
-//             return true;
-//         }
-
-//         if (expr.contains("OR")) {
-//             String[] parts = expr.split("OR");
-
-//             for (String part : parts) {
-//                 if (evaluateCondition(part.trim())) {
-//                     return true;
-//                 }
-//             }
-//             return false;
-//         }
-
-//         return evaluateCondition(expr);
-
-//     } catch (Exception e) {
-//         logger.error("Error evaluating expression: {}", expr, e);
-//         return false; // 🔥 NO CRASH
-//     }
-// }
-   private boolean evaluateSimpleExpression(String expr) {
-
-    try {
-
-        // =====================================================
-        // (incorrect for mixed AND/OR)
-        /*
-        if (expr.contains("AND")) {
-            String[] parts = expr.split("AND");
-            for (String part : parts) {
-                if (!evaluateCondition(part.trim())) {
-                    return false;
-                }
+                // Example:
+                // "(60000 >= 50000 AND 750 >= 700)" → true
             }
-            return true;
-        }
 
-        if (expr.contains("OR")) {
-            String[] parts = expr.split("OR");
-            for (String part : parts) {
-                if (evaluateCondition(part.trim())) {
-                    return true;
+            // =====================================================
+            // ✅ STEP 2: HANDLE OR (LOW PRIORITY)
+            // =====================================================
+            String[] orParts = expr.split("OR");
+
+            for (String orPart : orParts) {
+
+                // =================================================
+                // ✅ STEP 3: HANDLE AND (HIGH PRIORITY)
+                // =================================================
+                String[] andParts = orPart.split("AND");
+
+                boolean andResult = true;
+
+                for (String part : andParts) {
+
+                    part = part.trim();
+
+                    // Handle boolean replacements from brackets
+                    if (part.equalsIgnoreCase("true")) continue;
+
+                    if (part.equalsIgnoreCase("false")) {
+                        andResult = false;
+                        break;
+                    }
+
+                    // Evaluate actual condition
+                    if (!evaluateCondition(part)) {
+                        andResult = false;
+                        break;
+                    }
                 }
+
+                // If ANY OR block is true → return true
+                if (andResult) return true;
             }
+
             return false;
+
+        } catch (Exception e) {
+            logger.error("Error evaluating expression: {}", expr, e);
+            return false; // 🔥 prevents crash
         }
-        */
-        // =====================================================
-
-        // =====================================================
-        // (CORRECT PRECEDENCE HANDLING)
-        // =====================================================
-
-        // Step 1: Split by OR first (lowest priority)
-        String[] orParts = expr.split("OR");
-
-        for (String orPart : orParts) {
-
-            // Step 2: Inside each OR → evaluate AND
-            String[] andParts = orPart.split("AND");
-
-            boolean andResult = true;
-
-            for (String andPart : andParts) {
-                if (!evaluateCondition(andPart.trim())) {
-                    andResult = false;
-                    break;
-                }
-            }
-
-            // Step 3: If ANY OR block is true → return true
-            if (andResult) {
-                return true;
-            }
-        }
-
-        return false;
-
-    } catch (Exception e) {
-        logger.error("Error evaluating expression: {}", expr, e);
-        return false;
     }
-}
 
-    
-    // Evaluate single condition
-    // private boolean evaluateCondition(String condition) {
-
-    //     // Example: "60000 >= 50000"
-
-    //     String[] tokens = condition.split(" ");
-
-    //     double left = Double.parseDouble(tokens[0]);
-    //     String operator = tokens[1];
-    //     double right = Double.parseDouble(tokens[2]);
-
-    //     switch (operator) {
-
-    //         case ">":
-    //             return left > right;
-
-    //         case "<":
-    //             return left < right;
-
-    //         case ">=":
-    //             return left >= right;
-
-    //         case "<=":
-    //             return left <= right;
-
-    //         case "==":
-    //             return left == right;
-
-    //         default:
-    //             return false;
-    //     }
-    // }
-
+    // =========================================================
+    // Evaluate single condition like "60000 >= 50000"
+    // =========================================================
     private boolean evaluateCondition(String condition) {
 
         try {
-        // Normalize spacing (VERY IMPORTANT FIX)
-        condition = condition.replaceAll(">=", " >= ")
-                             .replaceAll("<=", " <= ")
-                             .replaceAll(">", " > ")
-                             .replaceAll("<", " < ")
-                             .replaceAll("==", " == ")
-                             .replaceAll("\\s+", " ")
-                             .trim();
+            // Normalize spacing (VERY IMPORTANT)
+            condition = condition.replaceAll(">=", " >= ")
+                                 .replaceAll("<=", " <= ")
+                                 .replaceAll(">", " > ")
+                                 .replaceAll("<", " < ")
+                                 .replaceAll("==", " == ")
+                                 .replaceAll("\\s+", " ")
+                                 .trim();
 
-        String[] tokens = condition.split(" ");
+            String[] tokens = condition.split(" ");
 
-        // SAFETY CHECK
-        if (tokens.length != 3) {
-            logger.error("Invalid condition format: {}", condition);
-            return false;
-        }
-
-        double left = Double.parseDouble(tokens[0]);
-        String operator = tokens[1];
-        double right = Double.parseDouble(tokens[2]);
-
-        switch (operator) {
-            case ">": return left > right;
-            case "<": return left < right;
-            case ">=": return left >= right;
-            case "<=": return left <= right;
-            case "==": return left == right;
-            default:
-                logger.error("Invalid operator: {}", operator);
+            // Safety check
+            if (tokens.length != 3) {
+                logger.error("Invalid condition format: {}", condition);
                 return false;
-        }
+            }
+
+            double left = Double.parseDouble(tokens[0]);
+            String operator = tokens[1];
+            double right = Double.parseDouble(tokens[2]);
+
+            switch (operator) {
+                case ">": return left > right;
+                case "<": return left < right;
+                case ">=": return left >= right;
+                case "<=": return left <= right;
+                case "==": return left == right;
+                default:
+                    logger.error("Invalid operator: {}", operator);
+                    return false;
+            }
 
         } catch (Exception e) {
-        logger.error("Error evaluating condition: {}", condition, e);
-        return false; 
+            logger.error("Error evaluating condition: {}", condition, e);
+            return false; // no crash
         }
     }
-
-    
-    
 }
