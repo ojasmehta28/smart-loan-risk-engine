@@ -24,9 +24,8 @@ public class LoanRuleService {
 
     
     
-    // ==============================
-    // CREATE RULE
-    // ==============================
+
+    // CREATE RULE    
     public LoanRuleEntity addRule(LoanRuleEntity rule){
 
         logger.info("Adding new rule: {}", rule);
@@ -34,7 +33,7 @@ public class LoanRuleService {
         // Validate expression-based rule BEFORE saving to DB
         validateRule(rule);
 
-        // ❌ OLD DESIGN (conditions mapping)
+        // (conditions mapping)
         /*
         for (RuleCondition cond : rule.getConditions()) {
             cond.setRule(rule);
@@ -46,9 +45,8 @@ public class LoanRuleService {
 
     
     
-    // ==============================
+    
     // READ RULES
-    // ==============================
     public List<LoanRuleEntity> getAllRules(){
 
         logger.info("Fetching all rules");
@@ -58,9 +56,8 @@ public class LoanRuleService {
 
    
     
-    // ==============================
+   
     // UPDATE RULE
-    // ==============================
     public LoanRuleEntity updateRule(Long id, LoanRuleEntity updatedRule){
 
         logger.info("Updating rule with id: {}", id);
@@ -68,12 +65,12 @@ public class LoanRuleService {
         LoanRuleEntity existing = ruleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Rule not found"));
 
-        // ❌ OLD (single-condition logic)
+        // (single-condition logic)
         // existing.setField(updatedRule.getField());
         // existing.setOperator(updatedRule.getOperator());
         // existing.setValue(updatedRule.getValue());
 
-        // ❌ OLD (AND/OR condition logic)
+        // (AND/OR condition logic)
         // existing.setLogicalOperator(updatedRule.getLogicalOperator());
         // existing.setConditions(updatedRule.getConditions());
 
@@ -89,9 +86,8 @@ public class LoanRuleService {
     }
 
     
-    // ==============================
+    
     // DELETE RULE
-    // ==============================
     public void deleteRule(Long id){
 
         logger.info("Deleting rule with id: {}", id);
@@ -100,28 +96,25 @@ public class LoanRuleService {
     }
 
     
-    // ==============================
+    
     // PAGINATED READ
-    // ==============================
     public Page<LoanRuleEntity> getRulesPaginated(int page, int size) {
 
         return ruleRepository.findAll(PageRequest.of(page, size));
     }
 
     
-    // ==============================
+    
     // VALIDATION LOGIC 
-    // ==============================
     private void validateRule(LoanRuleEntity rule) {
 
-        // =========================================================
+        
         // 1. Expression must NOT be null or empty
-        // =========================================================
         if (rule.getExpression() == null || rule.getExpression().trim().isEmpty()) {
             throw new RuntimeException("Expression cannot be empty");
         }
 
-        // ❌ OLD BASIC VALIDATION (too weak)
+        // Old  Validation
         /*
         String expr = rule.getExpression();
 
@@ -134,9 +127,7 @@ public class LoanRuleService {
         }
         */
 
-        // =========================================================
-        // ✅ NEW IMPROVED VALIDATION (STRONGER & SAFER)
-        // =========================================================
+        
 
         String expr = rule.getExpression().trim();
 
@@ -163,9 +154,8 @@ public class LoanRuleService {
             throw new RuntimeException("Invalid operator format");
         }
 
-        // =========================================================
+        
         // 6. Prevent duplicate priority
-        // =========================================================
         List<LoanRuleEntity> existingRules = ruleRepository.findAll();
 
         for (LoanRuleEntity existing : existingRules) {
